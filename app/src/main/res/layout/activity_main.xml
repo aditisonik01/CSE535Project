@@ -12,24 +12,30 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Name"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="16dp" />
+        android:hint="Name"
+        app:layout_constraintTop_toBottomOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"/>
 
     <Button
         android:id="@+id/register"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="REGISTER"
-        tools:layout_editor_absoluteX="59dp"
-        tools:layout_editor_absoluteY="77dp" />
+        app:layout_constraintTop_toBottomOf="@+id/user"
+        android:layout_marginTop="18dp"
+        app:layout_constraintLeft_toRightOf="parent"
+        android:layout_marginLeft="30dp"/>
 
     <Button
         android:id="@+id/unlock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="UNLOCK PHONE"
-        tools:layout_editor_absoluteX="200dp"
-        tools:layout_editor_absoluteY="77dp" />
+        app:layout_constraintTop_toBottomOf="@+id/user"
+        android:layout_marginTop="18dp"
+        app:layout_constraintLeft_toRightOf="@id/register"
+        android:layout_marginLeft="30dp"/>
+
 
 </android.support.constraint.ConstraintLayout>
