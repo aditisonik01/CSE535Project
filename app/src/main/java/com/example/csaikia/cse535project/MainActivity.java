@@ -15,11 +15,9 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("chaynika","******ONCREATE STARTS******");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         File file = new File(Environment.getExternalStorageDirectory() + File.separator+"Android/data/MCProject_data");
@@ -66,33 +65,46 @@ public class MainActivity extends AppCompatActivity {
                     //My EEG dataset is in directory /sdcard/Android/data/MCProject_data
                     // TODO: Check if that user already exists in server. If it does, then tell the person
                     // If already registered user, it does not allow u to register again
-                    File userFile = new File(Environment.getExternalStorageDirectory() + File.separator+"Android/data/MCProject_data"+user);
+                    File userFile = new File(Environment.getExternalStorageDirectory() + File.separator + "Android/data/MCProject_data" + user);
                     if (check_if_user_exists_in_server(userFile)) {
                         Toast.makeText(MainActivity.this, "This user already exists. Please register as another user", Toast.LENGTH_LONG).show();
                     } else {
                         int hashForuser = user.hashCode();
                         Random r = new Random();
-                        int i = r.nextInt(11-1)+1;
+                        int i = r.nextInt(10 - 1+1) + 1;
                         String CSVFile = getCSVData(i);
-                        user_db.execSQL("insert into "+user_table+" (user,csvfile) values ("
-                        + hashForuser+","+CSVFile+"_test.csv);");
-
-                        // Create the file which I need to upload to the remote server and fog server
-                        File src = new File(Environment.getExternalStorageDirectory() + File.separator+"Android/data/MCProject_data/dataset/"+CSVFile+"_train.csv");
-                        File target = new File(Environment.getExternalStorageDirectory() + File.separator+"Android/data/MCProject_data/dataset/"+user+".csv");
+                        Log.d("chaynika", "User data: "+ hashForuser + " "+CSVFile);
                         try {
-                            copy(src,target);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                            String string = "insert into " + user_table + " (user,csvfile) values ("
+                                    + hashForuser + ",'" + CSVFile + "_test.csv');";
+                            Log.d("chaynika","SQLITE query is "+string);
+                            user_db.beginTransaction();
+                            user_db.execSQL("insert into " + user_table + " (user,csvfile) values ("
+                                    + hashForuser + ",'" + CSVFile + "_test.csv');");
+                            user_db.setTransactionSuccessful();
+                            // Create the file which I need to upload to the remote server and fog server
+                            File src = new File(Environment.getExternalStorageDirectory() + File.separator + "Android/data/MCProject_data/dataset/" + CSVFile + "_train.csv");
+                            File target = new File(Environment.getExternalStorageDirectory() + File.separator + "Android/data/MCProject_data/dataset/" + user + ".csv");
+                            try {
+                                copyFile(src, target);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-                        // TODO write code to upload this file to server
+                            // TODO write code to upload this file to server
 
-                        // Now delete the target file
-                        try {
-                            target.delete();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            // Now delete the target file
+                            try {
+                                if (!target.delete()) {
+                                    throw new IOException();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } catch (SQLiteException e) {
+
+                        } finally {
+                            user_db.endTransaction();
                         }
                     }
                 }
@@ -158,25 +170,27 @@ public class MainActivity extends AppCompatActivity {
         return csvfile;
     }
 
-    // Reference: https://www.journaldev.com/861/java-copy-file
-    private static void copy(File source, File dest) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
+    // Reference: https://stackoverflow.com/questions/106770/standard-concise-way-to-copy-a-file-in-java
+    public static void copyFile(File src, File dest) throws IOException {
+        if(!dest.exists()) {
+            dest.createNewFile();
+        }
+
+        FileChannel source_channel = null;
+        FileChannel destination_channel = null;
+
         try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(dest);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = is.read(buffer)) > 0) {
-                os.write(buffer, 0, length);
+            source_channel = new FileInputStream(src).getChannel();
+            destination_channel = new FileOutputStream(src).getChannel();
+            destination_channel.transferFrom(source_channel, 0, source_channel.size());
+        }
+        finally {
+            if(source_channel != null) {
+                source_channel.close();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            is.close();
-            os.close();
+            if(destination_channel != null) {
+                destination_channel.close();
+            }
         }
     }
 }
