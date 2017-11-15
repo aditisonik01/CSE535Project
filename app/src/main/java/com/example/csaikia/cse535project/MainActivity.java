@@ -24,14 +24,14 @@ public class MainActivity extends AppCompatActivity {
     EditText userName;
     String user;
     String user_table = "user_table";
-
+    SQLiteDatabase user_db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("chaynika","******ONCREATE STARTS******");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         File file = new File(Environment.getExternalStorageDirectory() + File.separator+"Android/data/MCProject_data");
-        final SQLiteDatabase user_db = SQLiteDatabase.openDatabase(file.toString()+"/user_database",null, SQLiteDatabase.CREATE_IF_NECESSARY);
+        user_db = SQLiteDatabase.openDatabase(file.toString()+"/user_database",null, SQLiteDatabase.CREATE_IF_NECESSARY);
         user_db.beginTransaction();
 
         if (!tableExists(user_db,user_table)) {
@@ -65,8 +65,9 @@ public class MainActivity extends AppCompatActivity {
                     //My EEG dataset is in directory /sdcard/Android/data/MCProject_data
                     // TODO: Check if that user already exists in server. If it does, then tell the person
                     // If already registered user, it does not allow u to register again
-                    File userFile = new File(Environment.getExternalStorageDirectory() + File.separator + "Android/data/MCProject_data" + user);
-                    if (check_if_user_exists_in_server(userFile)) {
+                    // TODO @chaynika needs to change this line
+
+                    if (check_if_user_exists_in_server(user)) {
                         Toast.makeText(MainActivity.this, "This user already exists. Please register as another user", Toast.LENGTH_LONG).show();
                     } else {
                         int hashForuser = user.hashCode();
@@ -95,15 +96,17 @@ public class MainActivity extends AppCompatActivity {
 
                             // Now delete the target file
                             try {
-                                if (!target.delete()) {
-                                    throw new IOException();
-                                }
+                                // TODO uncomment this later
+//                                if (!target.delete()) {
+//                                    throw new IOException();
+//                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         } catch (SQLiteException e) {
 
                         } finally {
+                            //user_db.close();
                             user_db.endTransaction();
                         }
                     }
@@ -120,10 +123,25 @@ public class MainActivity extends AppCompatActivity {
                 if (!checkUser(user)) {
                     Toast.makeText(MainActivity.this, "Enter Name", Toast.LENGTH_LONG).show();
                 } else {
-                    // TODO check if that user is registered
+                    user = (userName.getText().toString());
                     // TODO check which server to pick
-                    // TODO create data for the user
-                    // TODO Match signature and unlock message printed
+                    if (check_if_user_exists_in_server(user)) {
+                        int hashForuser = user.hashCode();
+                        String query_find_csv = "select csvfile from "+user_table+" where user="+hashForuser;
+                        Cursor cursor= user_db.rawQuery(query_find_csv, null);
+                        String csv_file_for_test = "";
+                        if (cursor.moveToFirst()){
+                            do {
+                                csv_file_for_test = cursor.getString(0);
+                            } while(cursor.moveToNext());
+                        }
+                        cursor.close();
+                        user_db.close();
+                        // TODO send the csv_file_for_test file to the cloud for matching
+                        // TODO Match signature and unlock message printed
+                    } else {
+                        Toast.makeText(MainActivity.this, "User not authorized", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
@@ -137,9 +155,18 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    // TODO write this
-    private boolean check_if_user_exists_in_server (File file) {
-        return false;
+    private boolean check_if_user_exists_in_server (String user) {
+        String query ="SELECT * FROM "+user_table+" WHERE user="+user.hashCode();
+        Cursor cursor= user_db.rawQuery(query,null);
+        if(cursor.getCount()>0){
+            user_db.close();
+            cursor.close();
+            return true;
+        }else{
+            user_db.close();
+            cursor.close();
+            return false;
+        }
     }
 
     // Reference: https://stackoverflow.com/questions/1601151/how-do-i-check-in-sqlite-whether-a-table-exists
