@@ -25,6 +25,8 @@ dfTrain = pd.read_csv('S001R14_train.csv', sep=',',header=None)
 dfTest = pd.read_csv('S001R14_test.csv', sep=',',header=None)
 
 
+# print (dfTrain.describe())
+
 x = dfTrain.values #returns a numpy array
 min_max_scaler = preprocessing.MinMaxScaler()
 x_scaled = min_max_scaler.fit_transform(x)
@@ -50,8 +52,7 @@ for index, row in normTrain.iterrows():
 	result = np.dot(row,normTest.iloc[index])
 	cosSimilarity.append(result)
 
-print (cosSimilarity)
-	
+print (cosSimilarity)	
 
 
 
