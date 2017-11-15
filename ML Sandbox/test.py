@@ -3,6 +3,8 @@ import sys
 import sklearn as sk
 import pandas as pd
 from scipy.fftpack import fft
+from scipy import spatial
+from sklearn import preprocessing
 
 # https://machinelearningmastery.com/feature-selection-machine-learning-python/
 
@@ -18,9 +20,42 @@ from scipy.fftpack import fft
 
 
 
-df = pd.read_csv('S001R14_train.csv', sep=',',header=None)
-fft = np.fft.fftn(df)
-print ((fft).shape)
+dfTrain = pd.read_csv('S001R14_train.csv', sep=',',header=None)
+
+dfTest = pd.read_csv('S001R14_test.csv', sep=',',header=None)
+
+
+x = dfTrain.values #returns a numpy array
+min_max_scaler = preprocessing.MinMaxScaler()
+x_scaled = min_max_scaler.fit_transform(x)
+normTrain = pd.DataFrame(x_scaled)
+
+x = dfTest.values #returns a numpy array
+min_max_scaler = preprocessing.MinMaxScaler()
+x_scaled = min_max_scaler.fit_transform(x)
+normTest = pd.DataFrame(x_scaled)
+
+print (normTest.shape)
+
+
+
+# Cosine Similarity
+cosSimilarity =[]
+for index, row in normTrain.iterrows():
+
+	# fftTrain = np.fft.fft(row)
+	# fftTest = np.fft.fft(dfTest.iloc[index])
+	# result = 1-spatial.distance.cosine(row, dfTest.iloc[index])
+
+	result = np.dot(row,normTest.iloc[index])
+	cosSimilarity.append(result)
+
+print (cosSimilarity)
+	
+
+
+
+	
 
 
 
