@@ -58,7 +58,8 @@ normalized = (cosSimilarity-min(cosSimilarity))/(max(cosSimilarity)-min(cosSimil
 
 
 print (normalized)
-
+normalized = np.array(normalized)
+np.savetxt("normalised.csv", normalized, delimiter=",")
 
 	
 
