@@ -52,8 +52,12 @@ for index, row in normTrain.iterrows():
 	result = np.dot(row,normTest.iloc[index])
 	cosSimilarity.append(result)
 
-print (cosSimilarity)	
+# print (max(cosSimilarity),min(cosSimilarity))	
 
+normalized = (cosSimilarity-min(cosSimilarity))/(max(cosSimilarity)-min(cosSimilarity))
+
+
+print (normalized)
 
 
 	
